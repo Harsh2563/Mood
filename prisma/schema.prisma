@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -12,28 +9,29 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id        String         @id @default(uuid())
+  email     String         @unique
+  clerkId   String         @unique
+  name      String?
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
 
-  clerkId String         @unique
-  email   String         @unique
-  entries JournalEntry[]
+  entries   JournalEntry[]
 }
+
 
 model JournalEntry {
   id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  userId String
-  user   User   @relation(fields: [userId], references: [id])
-
-  content String @db.Text
+  content String               @db.Text
 
   analysis Analysis?
-
-  @@index([userId])
+  
+  @@unique([userId, id])
 }
 
 model Analysis {
@@ -42,11 +40,13 @@ model Analysis {
   updatedAt DateTime @updatedAt
 
   entryId String
-  entry   JournalEntry @relation(fields: [entryId], references: [id])
+  entry JournalEntry @relation(fields: [entryId],references: [id])
 
-  mood     String
-  summary  String  @db.Text
+  mood String
+  summary String @db.Text
+  color String
   negative Boolean
 
   @@unique([entryId])
 }
+
