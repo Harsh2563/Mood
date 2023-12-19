@@ -18,7 +18,7 @@ const userEntry = async(id)=> {
 const EntryPage = async ({params})=> {
     const entry = await userEntry(params.id)
     return (
-        <div>
+        <div className="h-full w-full">
             <Entry entry={entry}/>
         </div>
     )

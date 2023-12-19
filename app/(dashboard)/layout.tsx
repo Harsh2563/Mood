@@ -14,7 +14,7 @@ const DashboardLayout = ({children})=> {
                         <UserButton />
                         </span>
                     </div>
-                    <div className="">
+                    <div className="h-full w-full">
                         {children}
                     </div>
                 </div>
