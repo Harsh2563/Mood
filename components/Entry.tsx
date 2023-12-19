@@ -17,7 +17,7 @@ const Entry = ({entry})=> {
         }
     })
    return (
-    <div className="h-full w-full">
+    <div className="h-full w-full flex">
         {loading && (<div>....loading</div>)}
        <textarea 
        className="w-full h-full p-8 text-xl  outline-none"
