@@ -1,5 +1,6 @@
 import EntryCard from "@/components/EntryCard";
 import NewEntry from "@/components/NewEntry";
+import { analyze } from "@/utils/ai";
 import { getUserFromClerkId } from "@/utils/auth";
 import { prisma } from "@/utils/db";
 import Link from "next/link";
@@ -14,6 +15,7 @@ const getEntries = async()=> {
             createdAt: 'desc'
         }
     })
+
 
     return entries
 }
