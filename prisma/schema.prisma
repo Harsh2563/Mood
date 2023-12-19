@@ -9,16 +9,15 @@ datasource db {
 }
 
 model User {
-  id        String         @id @default(uuid())
-  email     String         @unique
-  clerkId   String         @unique
-  
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
+  id      String @id @default(uuid())
+  email   String @unique
+  clerkId String @unique
 
-  entries   JournalEntry[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  entries JournalEntry[]
 }
-
 
 model JournalEntry {
   id        String   @id @default(uuid())
@@ -27,11 +26,11 @@ model JournalEntry {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  content String               @db.Text
+  content String @db.Text
 
   analysis Analysis?
-  
-  @@unique([userId])
+
+  @@unique([userId, id])
 }
 
 model Analysis {
@@ -40,13 +39,12 @@ model Analysis {
   updatedAt DateTime @updatedAt
 
   entryId String
-  entry JournalEntry @relation(fields: [entryId],references: [id])
+  entry   JournalEntry @relation(fields: [entryId], references: [id])
 
-  mood String
-  summary String @db.Text
-  color String
+  mood     String
+  summary  String  @db.Text
+  color    String
   negative Boolean
 
   @@unique([entryId])
 }
-
