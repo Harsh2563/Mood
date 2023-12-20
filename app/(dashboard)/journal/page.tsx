@@ -15,8 +15,8 @@ const getEntries = async()=> {
             createdAt: 'desc'
         }
     })
-
-
+    
+    analyze('Today i just drank coffee and remain in my room')
     return entries
 }
 
