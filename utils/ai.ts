@@ -5,8 +5,8 @@ import z  from 'zod'
 
 
 const parser = StructuredOutputParser.fromZodSchema(
-    z.object({
-        mood: z
+  z.object({
+    mood: z
       .string()
       .describe('the mood of the person who wrote the journal entry.'),
     subject: z.string().describe('the subject of the journal entry.'),
@@ -24,7 +24,7 @@ const parser = StructuredOutputParser.fromZodSchema(
   })
 )
 
-const getPrompt = async (content: string)=> {
+const getPrompt = async (content)=> {
     const format_instructions = parser.getFormatInstructions()
 
     const prompt = new PromptTemplate({
@@ -37,19 +37,22 @@ const getPrompt = async (content: string)=> {
   const input = await prompt.format({
     entry: content,
   })
-console.log(input);
-
   return input
 }
 
 
-export const analyze = async(content: string)=> {
+export const analyze = async(content)=> {
     const input = await getPrompt(content)
     const model = new OpenAI({
         temperature:0,
         modelName:'gpt-3.5-turbo'
     })
     const result = await model.call(input)
-    console.log(result);
+    try {
+      console.log("HERE IS THE RESULT FELLAS",result);  
+      return parser.parse(result)
+    } catch (error) {
+      console.log(error);
+    }
     
 }
