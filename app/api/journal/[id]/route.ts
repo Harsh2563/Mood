@@ -33,7 +33,7 @@ export const PATCH = async(request,{params})=>{
         })
        
 
-       return NextResponse.json({data:updatedContent})
+       return NextResponse.json({data:{...updatedContent, analysis:analysis}})
     } catch (error) {
         console.log("route.ts error", error);
     }
