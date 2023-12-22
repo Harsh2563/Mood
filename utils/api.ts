@@ -11,9 +11,7 @@ export const newEntry = async () => {
       );
   
       if (res.ok) {
-        const data = await res.json();
-        console.log("data is here", data);
-        
+        const data = await res.json();        
         return data.data;
       }
     } catch (error) {
@@ -33,5 +31,27 @@ export const newEntry = async () => {
         const data = await res.json();
         return data.data;
       }
+  }
+
+
+  export const askQues = async(question)=> {
+    try {
+      const res = await fetch(
+        new Request(createURL('/api/question'), {
+          method: 'POST',
+          body: JSON.stringify({question})
+        })
+      );
+  
+      if (res.ok) {
+        const data = await res.json();
+        console.log("data is here", data.data);
+        
+        return data.data;
+      }
+    } catch (error) {
+      console.error('Error answering the question:', error);
+      return;
+    }
   }
   
