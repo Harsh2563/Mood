@@ -7,9 +7,7 @@ const NewEntry = () => {
   const router = useRouter()
 
   const handleClick = async () => {
-    const data = await newEntry()
-    console.log(data);
-    
+    const data = await newEntry()    
     router.push(`/journal/${data.id}`)
   }
    return (
