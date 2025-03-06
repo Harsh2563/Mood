@@ -2,30 +2,30 @@ import Entry from "@/components/Entry"
 import { getUserFromClerkId } from "@/utils/auth"
 import { prisma } from "@/utils/db"
 
-const userEntry = async(id)=> {
+const userEntry = async (id) => {
     const user = await getUserFromClerkId();
     const requiredEntry = await prisma.journalEntry.findUnique({
-        where:{
+        where: {
             userId_id: {
                 userId: user.id,
                 id,
             },
         },
         include: {
-            analysis:true,
+            analysis: true,
         }
     })
     return requiredEntry;
 }
 
-const EntryPage = async ({params})=> {
+const EntryPage = async ({ params }) => {
 
     const entry = await userEntry(params.id)
-    
-    
+
+
     return (
         <div className="h-full w-full bg-white">
-            <Entry entry={entry}/>
+            <Entry entry={entry} />
         </div>
     )
 }
