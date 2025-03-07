@@ -2,7 +2,7 @@ import EntryCard from "@/components/EntryCard";
 import NewEntry from "@/components/NewEntry";
 import Question from "@/components/Question";
 import { prisma } from "@/utils/db";
-import { analyze } from "@/utils/ai";
+import { analyze, analyzeQuestion } from "@/utils/ai";
 import { getAuthUser } from "@/utils/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
@@ -40,6 +40,26 @@ const JournalPage = async () => {
         }
     };
 
+    const handleQuestion = async (question: string) => {
+        "use server";
+
+        try {
+            const user = await getAuthUser();
+
+            const entries = await prisma.journalEntry.findMany({
+                where: { userId: user.id },
+                select: { createdAt: true, content: true, id: true },
+                orderBy: { createdAt: "desc" }
+            });
+
+            const answer = await analyzeQuestion(question, entries);
+            return answer;
+        } catch (error) {
+            console.error("Error handling question:", error);
+            return "Sorry, I couldn't process your question at this time.";
+        }
+    };
+
     const entries = await prisma.journalEntry.findMany({
         where: { userId: user.id },
         include: { analysis: true },
@@ -57,7 +77,7 @@ const JournalPage = async () => {
                 </div>
 
                 <div className="mb-12">
-                    <Question />
+                    <Question askQuestion={handleQuestion} />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

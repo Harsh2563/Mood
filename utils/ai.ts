@@ -47,10 +47,37 @@ const getPrompt = async (content) => {
 }
 
 
+export const analyzeQuestion = async (question: string, entries: any[]) => {
+  const docs = entries.map((entry) => {
+    return new Document({
+      pageContent: entry.content,
+      metadata: { id: entry.id, createdAt: entry.createdAt },
+    })
+  })
+
+  const model = new OpenAI({
+    temperature: 0,
+    modelName: 'gpt-3.5-turbo',
+    openAIApiKey: process.env.OPENAI_API_KEY // Move to environment variable
+  })
+
+  const chain = loadQARefineChain(model)
+  const embeddings = new OpenAIEmbeddings()
+  const store = await MemoryVectorStore.fromDocuments(docs, embeddings)
+  const relevantDocs = await store.similaritySearch(question)
+
+  const result = await chain.call({
+    input_documents: relevantDocs,
+    question,
+  })
+
+  return result.output_text
+}
+
 export const analyze = async (content) => {
   const input = await getPrompt(content)
   const model = new OpenAI({
-    openAIApiKey: "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",
+    openAIApiKey: process.env.OPENAI_API_KEY,
     temperature: 0,
     modelName: 'gpt-3.5-turbo'
   })
@@ -61,7 +88,6 @@ export const analyze = async (content) => {
   } catch (error) {
     console.log(error);
   }
-
 }
 
 
