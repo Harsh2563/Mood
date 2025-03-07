@@ -4,29 +4,20 @@ import { prisma } from "@/utils/db";
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
-export const POST = async()=> {
-  const user = await getUserFromClerkId();
-  console.log("user is",user);
-  
-  
-  const entry = await prisma.journalEntry.create({
-    data: {
-        userId: user.id,
-        content: 'I just sat all day and drank coffe with my family',
+// 
+
+export const POST = async (request) => {
+  const { id } = await request.json();
+  const user = await prisma.user.findUnique({
+    where: {
+      clerkId: id,
     },
   })
-  
-  const analysis = await analyze(entry.content);
-  
-  await prisma.analysis.create({
-    data: {
+  const entries = await prisma.journalEntry.findMany({
+    where: {
       userId: user.id,
-      entryId: entry.id,
-      ...analysis,
-    }
+    },
   })
-
-  revalidatePath('/journal')
-  return NextResponse.json({data: entry});
+  return NextResponse.json({ data: entries })
 }
 

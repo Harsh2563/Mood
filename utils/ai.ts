@@ -1,17 +1,17 @@
-import { PromptTemplate} from 'langchain/prompts'
-import {OpenAI} from 'langchain/llms/openai'
-import {StructuredOutputParser} from 'langchain/output_parsers'
-import z  from 'zod'
-import {Document} from 'langchain/document'
-import {loadQARefineChain} from 'langchain/chains'
+import { PromptTemplate } from 'langchain/prompts'
+import { OpenAI } from 'langchain/llms/openai'
+import { StructuredOutputParser } from 'langchain/output_parsers'
+import z from 'zod'
+import { Document } from 'langchain/document'
+import { loadQARefineChain } from 'langchain/chains'
 import { OpenAIEmbeddings } from 'langchain/embeddings/openai'
-import {MemoryVectorStore} from 'langchain/vectorstores/memory'
+import { MemoryVectorStore } from 'langchain/vectorstores/memory'
 
 const parser = StructuredOutputParser.fromZodSchema(
   z.object({
     sentimentalScore: z
-          .number()
-          .describe('the mood of the person who wrote the journal entry.'),
+      .number()
+      .describe('the mood of the person who wrote the journal entry.'),
     mood: z
       .string()
       .describe('the mood of the person who wrote the journal entry.'),
@@ -30,11 +30,11 @@ const parser = StructuredOutputParser.fromZodSchema(
   })
 )
 
-const getPrompt = async (content)=> {
-    const format_instructions = parser.getFormatInstructions()
+const getPrompt = async (content) => {
+  const format_instructions = parser.getFormatInstructions()
 
-    const prompt = new PromptTemplate({
-        template:
+  const prompt = new PromptTemplate({
+    template:
       'Analyze the following journal entry. Follow the intrusctions and format your response to match the format instructions, no matter what! \n{format_instructions}\n{entry}',
     inputVariables: ['entry'],
     partialVariables: { format_instructions },
@@ -47,40 +47,41 @@ const getPrompt = async (content)=> {
 }
 
 
-export const analyze = async(content)=> {
-    const input = await getPrompt(content)
-    const model = new OpenAI({
-        temperature:0,
-        modelName:'gpt-3.5-turbo'
-    })
-    const result = await model.call(input)
-    try {
-      console.log("HERE IS THE RESULT FELLAS",result);  
-      return parser.parse(result)
-    } catch (error) {
-      console.log(error);
-    }
-    
+export const analyze = async (content) => {
+  const input = await getPrompt(content)
+  const model = new OpenAI({
+    openAIApiKey: "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",
+    temperature: 0,
+    modelName: 'gpt-3.5-turbo'
+  })
+  const result = await model.call(input)
+  try {
+    console.log("HERE IS THE RESULT FELLAS", result);
+    return parser.parse(result)
+  } catch (error) {
+    console.log(error);
+  }
+
 }
 
 
-export const ques = async(question,entries)=> {
-    const docs = entries.map((entry)=> {
-      return new Document({
-        pageContent: entry.content,
-        metadata: {id: entry.id, createdAt: entry.createdAt},
-      })
+export const ques = async (question, entries) => {
+  const docs = entries.map((entry) => {
+    return new Document({
+      pageContent: entry.content,
+      metadata: { id: entry.id, createdAt: entry.createdAt },
     })
+  })
 
-    const model = new OpenAI({temperature:0, modelName:'gpt-3.5-turbo'})
-    const chain = loadQARefineChain(model);
-    const embbedings = new OpenAIEmbeddings()
-    const store = await MemoryVectorStore.fromDocuments(docs,embbedings)
-    const relavantDocs = await store.similaritySearch(question) 
-    const result = await chain.call({
-      input_documents: relavantDocs,
-      question,
-    })
-    
-    return result.output_text;
+  const model = new OpenAI({ temperature: 0, modelName: 'gpt-3.5-turbo' })
+  const chain = loadQARefineChain(model);
+  const embbedings = new OpenAIEmbeddings()
+  const store = await MemoryVectorStore.fromDocuments(docs, embbedings)
+  const relavantDocs = await store.similaritySearch(question)
+  const result = await chain.call({
+    input_documents: relavantDocs,
+    question,
+  })
+
+  return result.output_text;
 }
