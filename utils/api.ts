@@ -1,4 +1,5 @@
-import { getUserFromClerkId } from "./auth";
+import { analyze } from "./ai";
+import { getAuthUser, getUserFromClerkId } from "./auth";
 import { prisma } from "./db";
 
 const createURL = (path: string) => {
@@ -79,5 +80,34 @@ export const getEntries = async (id: string) => {
   } catch (error) {
     console.error('Error fetching entries:', error);
     return null;
+  }
+};
+
+export const createNewEntry = async () => {
+  const user = await getAuthUser();
+
+  try {
+    const newEntry = await prisma.journalEntry.create({
+      data: {
+        userId: user.id,
+        content: "",
+      },
+    });
+
+    // Create initial analysis
+    const analysis = await analyze(newEntry.content);
+
+    await prisma.analysis.create({
+      data: {
+        userId: user.id,
+        entryId: newEntry.id,
+        ...analysis,
+      },
+    });
+
+    return { id: newEntry.id.toString() };
+  } catch (error) {
+    console.error("Error creating new entry:", error);
+    throw error;
   }
 };

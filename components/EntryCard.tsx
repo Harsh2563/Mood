@@ -1,8 +1,13 @@
-import { motion } from 'framer-motion'
+// components/EntryCard.tsx
+import { memo } from 'react'
 import { JournalEntry } from '@prisma/client'
-import { FaceSmileIcon, DocumentTextIcon, ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline'
+import { ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline'
 
-const EntryCard = ({ entry }: { entry: JournalEntry & { analysis?: any } }) => {
+interface EntryCardProps {
+  entry: JournalEntry & { analysis?: any }
+}
+
+const EntryCard = memo(({ entry }: EntryCardProps) => {
   const date = new Date(entry.createdAt).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
@@ -12,14 +17,14 @@ const EntryCard = ({ entry }: { entry: JournalEntry & { analysis?: any } }) => {
   return (
     <div className="bg-slate-800 rounded-lg p-4 border border-slate-700 hover:border-emerald-500/30 transition-colors">
       <div className="flex justify-between items-center mb-3">
-        <span className="text-sm text-slate-400">
-          {new Date(entry.createdAt).toLocaleDateString()}
-        </span>
+        <time className="text-sm text-slate-400">{date}</time>
         <span className="px-2 py-1 text-xs bg-emerald-500/20 text-emerald-400 rounded-full">
           {entry.analysis?.mood || 'Neutral'}
         </span>
       </div>
-      <h3 className="text-slate-200 font-medium mb-2">{entry.analysis?.subject || 'No title'}</h3>
+      <h3 className="text-slate-200 font-medium mb-2 line-clamp-1">
+        {entry.analysis?.subject || 'Untitled Entry'}
+      </h3>
       <p className="text-slate-400 text-sm line-clamp-3">
         {entry.analysis?.summary || 'No summary available'}
       </p>
@@ -30,8 +35,8 @@ const EntryCard = ({ entry }: { entry: JournalEntry & { analysis?: any } }) => {
         </button>
       </div>
     </div>
-  );
+  )
+})
 
-}
-
+EntryCard.displayName = 'EntryCard'
 export default EntryCard
