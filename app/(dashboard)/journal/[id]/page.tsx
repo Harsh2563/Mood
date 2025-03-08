@@ -20,7 +20,6 @@ const getEntry = async (id: string) => {
 const EntryPage = async ({ params }) => {
     const entry = await getEntry(params.id)
 
-    // Server action for updating entry
     const updateEntry = async ({ id, content }: { id: string, content: string }) => {
         'use server'
 

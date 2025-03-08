@@ -35,9 +35,6 @@ const createNewUser = async () => {
       data: {
         clerkId: user.id,
         email: email,
-        // // username: user.username || `user_${Math.random().toString(36).substr(2, 9)}`,
-        // firstName: user.firstName,
-        // lastName: user.lastName,
       },
     })
 

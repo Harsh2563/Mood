@@ -32,7 +32,6 @@ const Entry = ({ entry, updateEntry }) => {
 
     return (
         <div className="h-full w-full flex flex-col md:flex-row gap-6 bg-gray-900">
-            {/* Editor Section */}
             <div className="flex-1 relative p-4">
                 <div className="absolute top-6 right-6">
                     {isLoading && (
@@ -59,7 +58,6 @@ const Entry = ({ entry, updateEntry }) => {
                 />
             </div>
 
-            {/* Analysis Section */}
             <div className="md:w-96 bg-gray-800 rounded-lg shadow-xl overflow-hidden border border-gray-700">
                 <div className="p-6 bg-opacity-50" style={{ backgroundColor: analysis?.color ? `${analysis.color}40` : '#1f2937' }}>
                     <h2 className="text-2xl font-bold text-gray-100">Entry Analysis</h2>

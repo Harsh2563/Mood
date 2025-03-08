@@ -2,7 +2,7 @@ import { UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { HomeIcon, BookOpenIcon, ClockIcon } from "@heroicons/react/24/outline";
 
-const DashboardLayout = ({ children }) => {
+const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
     const links = [
         { href: '/', label: "Home", icon: <HomeIcon className="w-6 h-6" /> },
         { href: '/journal', label: "Journal", icon: <BookOpenIcon className="w-6 h-6" /> },

@@ -3,7 +3,6 @@ import { getAuthUser } from "@/utils/auth"
 import { prisma } from "@/utils/db"
 import { NextResponse } from "next/server"
 
-// app/api/entries/route.ts
 export const GET = async () => {
     try {
         const user = await getAuthUser()

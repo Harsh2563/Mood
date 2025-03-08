@@ -34,7 +34,6 @@ const EntryCard = ({ entry, onDelete }: EntryCardProps) => {
 
   return (
     <div className="bg-slate-800 rounded-lg p-4 border border-slate-700 hover:border-emerald-500/30 transition-colors relative">
-      {/* Delete Button */}
       <button
         onClick={(e) => {
           e.preventDefault()
@@ -46,7 +45,6 @@ const EntryCard = ({ entry, onDelete }: EntryCardProps) => {
         <TrashIcon className="w-5 h-5" />
       </button>
 
-      {/* Card Content */}
       <div className="flex justify-between items-center mb-3">
         <time className="text-sm text-slate-400">
           {new Date(entry.createdAt).toLocaleDateString()}
@@ -68,7 +66,6 @@ const EntryCard = ({ entry, onDelete }: EntryCardProps) => {
         </Link>
       </div>
 
-      {/* Delete Confirmation Modal */}
       {showDeleteModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-slate-800 rounded-lg p-6 max-w-md w-full border border-slate-700">

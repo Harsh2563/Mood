@@ -12,7 +12,6 @@ export default function JournalPage() {
     const router = useRouter();
     const [isCreating, setIsCreating] = useState(false);
 
-    // Query for entries
     const {
         data: entries = [],
         isLoading,
@@ -92,7 +91,6 @@ export default function JournalPage() {
         },
     });
 
-    // Handler passed to <Question> that calls the questionMutation
     const askQuestion = async (query: string) => {
         return questionMutation.mutateAsync(query);
     };
