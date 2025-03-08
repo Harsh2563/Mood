@@ -1,87 +1,129 @@
-// app/(dashboard)/journal/page.tsx
-import { cache } from 'react'
-import Link from "next/link"
-import { prisma } from "@/utils/db"
-import { analyze, analyzeQuestion } from "@/utils/ai"
-import { getAuthUser } from "@/utils/auth"
-import { redirect } from "next/navigation"
-import EntryCard from "@/components/EntryCard"
-import NewEntry from "@/components/NewEntry"
-import Question from "@/components/Question"
+"use client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import dynamic from "next/dynamic";
+import { Suspense } from "react";
+import EntryCard from "@/components/EntryCard";
+import Question from "@/components/Question";
+import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
 
-const getEntries = cache(async (userId: string) => {
-    return await prisma.journalEntry.findMany({
-        where: { userId },
-        include: { analysis: true },
-        orderBy: { createdAt: "desc" },
-    })
-})
+const NewEntry = dynamic(() => import("@/components/NewEntry"), {
+    ssr: false,
+    loading: () => (
+        <div className="h-full bg-slate-800 rounded-xl p-6 animate-pulse" />
+    ),
+});
 
-const JournalPage = async () => {
-    const user = await getAuthUser()
+const JournalPage = () => {
+    const queryClient = useQueryClient();
+    const router = useRouter();
 
-    // Server Actions
-    const createNewEntry = async () => {
-        "use server"
-        try {
-            const newEntry = await prisma.journalEntry.create({
-                data: { userId: user.id, content: "" }
-            })
+    const {
+        data: entries = [],
+        isLoading,
+        isError,
+        isFetching,
+    } = useQuery({
+        queryKey: ["journal-entries"],
+        queryFn: async () => {
+            const res = await fetch("/api/entries");
+            if (!res.ok) throw new Error("Failed to fetch");
+            return res.json();
+        },
+        staleTime: 1000 * 60 * 5,
+    });
 
-            const analysis = await analyze(newEntry.content)
-            await prisma.analysis.create({
-                data: { ...analysis, userId: user.id, entryId: newEntry.id }
-            })
+    const createMutation = useMutation({
+        mutationFn: async () => {
+            const res = await fetch("/api/entries", { method: "POST" });
+            if (!res.ok) throw new Error("Failed to create entry");
+            return res.json();
+        },
+        onSuccess: (data) => {
+            queryClient.invalidateQueries(["journal-entries"]);
+            router.push(`/journal/${data.id}`);
+        },
+    });
 
-            return { id: newEntry.id.toString() }
-        } catch (error) {
-            console.error("Entry creation failed:", error)
-            throw error
-        }
+    const deleteMutation = useMutation({
+        mutationFn: async (id: string) => {
+            const res = await fetch(`/api/entries/${id}`, { method: "DELETE" });
+            if (!res.ok) throw new Error("Failed to delete");
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries(["journal-entries"]);
+        },
+    });
+
+    if (isLoading) {
+        return (
+            <div className="p-6 bg-slate-900 min-h-screen">
+                <div className="max-w-6xl mx-auto">
+                    <div className="flex justify-between items-center mb-8">
+                        <div className="animate-pulse h-9 w-48 bg-slate-800 rounded" />
+                        <div className="animate-pulse h-5 w-24 bg-slate-800 rounded" />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {[...Array(3)].map((_, i) => (
+                            <div
+                                key={i}
+                                className="animate-pulse h-48 bg-slate-800 rounded"
+                            />
+                        ))}
+                    </div>
+                </div>
+            </div>
+        );
     }
 
-    const handleQuestion = async (question: string) => {
-        "use server"
-        try {
-            const entries = await prisma.journalEntry.findMany({
-                where: { userId: user.id },
-                select: { content: true, createdAt: true, id: true },
-                orderBy: { createdAt: "desc" }
-            })
-            return await analyzeQuestion(question, entries)
-        } catch (error) {
-            console.error("Question processing failed:", error)
-            return "Unable to process your question at this time"
-        }
+    if (isError) {
+        return (
+            <div className="p-6 bg-slate-900 min-h-screen flex items-center justify-center">
+                <div className="text-center text-slate-300">
+                    <div className="mb-4">Failed to load journal entries</div>
+                    <button
+                        onClick={() => queryClient.refetchQueries(["journal-entries"])}
+                        className="px-4 py-2 bg-slate-800 rounded-lg hover:bg-slate-700 transition-colors"
+                    >
+                        Retry
+                    </button>
+                </div>
+            </div>
+        );
     }
-
-    const entries = await getEntries(user.id)
 
     return (
         <div className="p-6 bg-slate-900 min-h-screen">
             <div className="max-w-6xl mx-auto">
                 <header className="flex justify-between items-center mb-8">
                     <h1 className="text-3xl font-bold text-slate-100">Journal Entries</h1>
-                    <span className="text-slate-400 text-sm">
-                        {entries.length} entries this month
-                    </span>
+                    <div className="text-slate-400 text-sm flex items-center gap-2">
+                        {isFetching && <Loader2 className="w-4 h-4 animate-spin" />}
+                        <span>{entries.length} entries this month</span>
+                    </div>
                 </header>
-
                 <div className="mb-12">
-                    <Question askQuestion={handleQuestion} />
+                    <Question />
                 </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <NewEntry createEntry={createNewEntry} />
-                    {entries.map((entry) => (
-                        <Link key={entry.id} href={`/journal/${entry.id}`}>
-                            <EntryCard entry={entry} />
-                        </Link>
+                    <Suspense
+                        fallback={
+                            <div className="h-full bg-slate-800 rounded-xl p-6 animate-pulse" />
+                        }
+                    >
+                        <NewEntry onCreate={createMutation.mutateAsync} />
+                    </Suspense>
+                    {entries.map((entry: any) => (
+                        <EntryCard
+                            key={entry.id}
+                            entry={entry}
+                            onDelete={deleteMutation.mutate}
+                        />
                     ))}
                 </div>
             </div>
         </div>
-    )
-}
+    );
+};
 
-export default JournalPage
+export default JournalPage;

@@ -1,41 +1,20 @@
-import { analyze } from "@/utils/ai";
-import { getUserFromClerkId } from "@/utils/auth"
-import { prisma } from "@/utils/db";
-import { NextResponse } from "next/server";
+// app/api/entries/[id]/route.ts
+import { NextResponse } from "next/server"
+import { prisma } from "@/utils/db"
+import { getAuthUser } from "@/utils/auth"
 
-export const PATCH = async(request,{params})=>{
-    try {
-        
-       const {content} = await request.json();
-       const user = await getUserFromClerkId();
-       const updatedContent = await prisma.journalEntry.update({
-        where:{
-            userId_id: {
-                userId: user.id,
-                id: params.id,
-            },
-        },
-        data: {
-            content,
-        }
-       })
+export const DELETE = async (req: Request, { params }: { params: { id: string } }) => {
+    const user = await getAuthUser()
 
-        const analysis = await analyze(updatedContent.content);
-        await prisma.analysis.upsert({
-            where: {
-                entryId: updatedContent.id,
-            },
-            create: {
-                userId: user.id,
-                entryId: updatedContent.id,
-                ...analysis,
-            },
-            update: analysis,
-        })
-       
+    // Delete analysis first
+    await prisma.analysis.deleteMany({
+        where: { entryId: params.id, userId: user.id }
+    })
 
-       return NextResponse.json({data:{...updatedContent, analysis:analysis}})
-    } catch (error) {
-        console.log("route.ts error", error);
-    }
+    // Then delete entry
+    await prisma.journalEntry.delete({
+        where: { id: params.id, userId: user.id }
+    })
+
+    return NextResponse.json({ success: true })
 }
