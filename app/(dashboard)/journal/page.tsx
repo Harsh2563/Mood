@@ -1,22 +1,17 @@
 "use client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 import EntryCard from "@/components/EntryCard";
 import Question from "@/components/Question";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
+import NewEntry from "@/components/NewEntry";
 
-const NewEntry = dynamic(() => import("@/components/NewEntry"), {
-    ssr: false,
-    loading: () => (
-        <div className="h-full bg-slate-800 rounded-xl p-6 animate-pulse" />
-    ),
-});
-
-const JournalPage = () => {
+export default function JournalPage() {
     const queryClient = useQueryClient();
     const router = useRouter();
+    const [isCreating, setIsCreating] = useState(false);
 
     const {
         data: entries = [],
@@ -39,9 +34,18 @@ const JournalPage = () => {
             if (!res.ok) throw new Error("Failed to create entry");
             return res.json();
         },
+        onMutate: async () => {
+            setIsCreating(true);
+        },
         onSuccess: (data) => {
             queryClient.invalidateQueries(["journal-entries"]);
             router.push(`/journal/${data.id}`);
+        },
+        onError: () => {
+            router.push("/journal");
+        },
+        onSettled: () => {
+            setIsCreating(false);
         },
     });
 
@@ -49,13 +53,33 @@ const JournalPage = () => {
         mutationFn: async (id: string) => {
             const res = await fetch(`/api/entries/${id}`, { method: "DELETE" });
             if (!res.ok) throw new Error("Failed to delete");
+            return id;
         },
-        onSuccess: () => {
+        onMutate: async (deletedId) => {
+            await queryClient.cancelQueries(["journal-entries"]);
+            const previousEntries = queryClient.getQueryData<any[]>(["journal-entries"]);
+            if (previousEntries) {
+                // Immediately remove the deleted entry from the cache
+                queryClient.setQueryData<any[]>(
+                    ["journal-entries"],
+                    previousEntries.filter((entry) => entry.id !== deletedId)
+                );
+            }
+            return { previousEntries };
+        },
+        onError: (error, deletedId, context) => {
+            // Revert to old data if deletion fails
+            if (context?.previousEntries) {
+                queryClient.setQueryData(["journal-entries"], context.previousEntries);
+            }
+        },
+        onSettled: () => {
+            // Ensure final data sync
             queryClient.invalidateQueries(["journal-entries"]);
         },
     });
 
-    if (isLoading) {
+    if (isLoading || isCreating) {
         return (
             <div className="p-6 bg-slate-900 min-h-screen">
                 <div className="max-w-6xl mx-auto">
@@ -65,10 +89,7 @@ const JournalPage = () => {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {[...Array(3)].map((_, i) => (
-                            <div
-                                key={i}
-                                className="animate-pulse h-48 bg-slate-800 rounded"
-                            />
+                            <div key={i} className="animate-pulse h-48 bg-slate-800 rounded" />
                         ))}
                     </div>
                 </div>
@@ -102,9 +123,11 @@ const JournalPage = () => {
                         <span>{entries.length} entries this month</span>
                     </div>
                 </header>
+
                 <div className="mb-12">
                     <Question />
                 </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <Suspense
                         fallback={
@@ -113,6 +136,7 @@ const JournalPage = () => {
                     >
                         <NewEntry onCreate={createMutation.mutateAsync} />
                     </Suspense>
+
                     {entries.map((entry: any) => (
                         <EntryCard
                             key={entry.id}
@@ -124,6 +148,4 @@ const JournalPage = () => {
             </div>
         </div>
     );
-};
-
-export default JournalPage;
+}

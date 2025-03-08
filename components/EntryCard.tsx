@@ -7,9 +7,10 @@ import Link from 'next/link'
 
 interface EntryCardProps {
   entry: JournalEntry & { analysis?: any }
+  onDelete: (id: string) => void
 }
 
-const EntryCard = ({ entry }: EntryCardProps) => {
+const EntryCard = ({ entry, onDelete }: EntryCardProps) => {
   const router = useRouter()
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -22,7 +23,7 @@ const EntryCard = ({ entry }: EntryCardProps) => {
       })
 
       if (!response.ok) throw new Error('Failed to delete')
-      router.refresh()
+      onDelete(entry.id)
     } catch (error) {
       console.error('Delete failed:', error)
     } finally {

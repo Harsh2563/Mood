@@ -34,6 +34,9 @@ const EntryPage = async ({ params }) => {
                 data: { content },
             })
 
+            console.log("updated entry", updatedEntry);
+
+
             const analysis = await analyze(updatedEntry.content)
 
             const updatedAnalysis = await prisma.analysis.upsert({
